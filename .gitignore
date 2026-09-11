@@ -141,3 +141,63 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+
+# ==============================
+# Terraform Specific
+# ==============================
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Exclude all .tfvars files, which are likely to contain sensitive data, such as
+# password, private keys, and other secrets. These should not be part of version
+# control as they are data points which areIt is perfectly normal that the recipes aren't loading! When we sanitized `app.js` earlier, we replaced your actual Supabase and Gemini keys with dummy text. Right now, the frontend is basically an empty shell trying to talk to a backend that doesn't exist yet. We will wire all of that back up in Phase 2.
+
+Before we move on, you are absolutely right: **do not commit yet.** 
+
+If you run a standard `git add .` right now, you will accidentally commit the `terraform.tfstate` file. This file contains the exact blueprint of your cloud architecture in plain text, and committing it to a public GitHub repository is a major security flaw (and a fast way to fail an interview). You also don't want to commit the `.terraform/` folder, which is heavy and contains the downloaded AWS plugins.
+
+Here is how to properly secure your Terraform project in version control.
+
+### Step 1: Update your `.gitignore`
+Open the `.gitignore` file located at the root of your project (outside the `infra` folder). Scroll to the very bottom, make a new line, and paste in the official HashiCorp Terraform ignore list:
+
+```text
+# =========================
+# TERRAFORM IGNORE LIST
+# =========================
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files (NEVER commit these!)
+*.tfstate
+*.tfstate.*
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Exclude all .tfvars files, which contain sensitive data
+*.tfvars
+*.tfvars.json
+
+# Ignore override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ignore transient lock info files created by terraform apply
+.terraform.tfstate.lock.info
+
+# Ignore CLI configuration files
+.terraformrc
+terraform.rc

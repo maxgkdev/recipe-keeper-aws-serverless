@@ -3,7 +3,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 // --- YOUR API KEYS ---
 const supabaseUrl = 'https://YOUR_SUPABASE_PROJECT.supabase.co';
 const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = createClient(supabaseUrl, supabaseKey);aw
 const geminiApiKey = 'YOUR_GEMINI_API_KEY';
 
 // --- REGISTER SERVICE WORKER FOR OFFLINE SUPPORT ---
