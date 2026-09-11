@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Recipe Keeper</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="style.css">
+
+  <link rel="manifest" href="manifest.json">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <link rel="apple-touch-icon" href="icon.png">
+  
+  <style>
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Recipe Keeper</h1>
+    <nav>
+      <button id="nav-home">Home</button>
+      <button id="nav-upload">Add Recipe</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- VIEW 1: HOME -->
+    <section id="view-home">
+      <h2>Categories</h2>
+      <div class="category-grid">
+        <button class="category-card" data-category="breakfast">Breakfast</button>
+        <button class="category-card" data-category="mains">Main Courses</button>
+        <button class="category-card" data-category="desserts">Desserts</button>
+        <!-- The new Others category button -->
+        <button class="category-card" data-category="others">Others</button>
+      </div>
+
+      <h2 style="margin-top: 32px;">My Recipes</h2>
+      <div id="recipes-container" class="recipes-grid"></div>
+    </section>
+
+    <!-- VIEW 2: UPLOAD -->
+    <section id="view-upload" class="hidden">
+      <h2>Add a New Recipe</h2>
+      
+      <form id="upload-form">
+        
+        <!-- Upload Mode Tabs -->
+        <div class="upload-tabs">
+          <button type="button" id="tab-photo" class="active-tab">📷 Scan Photo</button>
+          <button type="button" id="tab-link">🌐 Paste Link</button>
+        </div>
+
+        <!-- MODE 1: Camera (Visible by default) -->
+        <div id="section-photo" class="input-group">
+          <label class="custom-file-upload">
+            <input type="file" id="recipe-photo" accept="image/*" capture="environment" class="hidden-file-input">
+            <span style="font-size: 24px; display: block; margin-bottom: 8px;">📸</span>
+            Tap here to open Camera
+          </label>
+        </div>
+
+        <!-- MODE 2: Web Link (Hidden by default) -->
+        <div id="section-link" class="input-group hidden">
+          <label for="recipe-url">Paste recipe link:</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="recipe-url" placeholder="https://..." style="margin-bottom: 0;">
+            <button type="button" id="btn-fetch-url" class="btn-primary">Auto-Fill</button>
+          </div>
+        </div>
+
+        <!-- SHARED FIELDS (Title, Category, Text) -->
+        <div class="input-group">
+          <label for="recipe-title">Recipe Name</label>
+          <input type="text" id="recipe-title" required placeholder="e.g., Apple Pie">
+        </div>
+
+        <div class="input-group">
+          <label for="recipe-category">Category</label>
+          <select id="recipe-category" required>
+            <option value="" disabled selected>Select a category</option>
+            <option value="breakfast">Breakfast</option>
+            <option value="mains">Main Courses</option>
+            <option value="desserts">Desserts</option>
+            <!-- The new Others category dropdown option -->
+            <option value="others">Others</option>
+          </select>
+        </div>
+
+        <div class="input-group">
+          <label for="recipe-steps">Recipe Text (Editable)</label>
+          <textarea id="recipe-steps" rows="8" placeholder="Extracted text will appear here..."></textarea>
+        </div>
+
+        <button type="submit" id="btn-save-recipe">Save Recipe</button>
+      </form>
+    </section>
+
+    <!-- VIEW 3: RECIPE DETAIL -->
+    <section id="view-detail" class="hidden">
+      <div class="detail-header">
+        <button id="btn-back">← Back</button>
+        <button id="btn-delete" class="btn-delete">🗑️ Delete</button>
+      </div>
+
+      <!-- Editable Photo Container -->
+      <div class="detail-image-container">
+        <img id="detail-image" src="" alt="Recipe Photo">
+        <label class="btn-edit-photo" for="edit-photo-input">✏️ Change Photo</label>
+        <input type="file" id="edit-photo-input" accept="image/*" capture="environment" class="hidden-file-input">
+      </div>
+      
+      <div class="recipe-content">
+        <span id="detail-category" class="badge">Category</span>
+        <h2 id="detail-title">Recipe Title</h2>
+        
+        <!-- Audio Pacing Toggle -->
+        <div class="audio-toggle">
+          <label><input type="radio" name="audio-mode" value="continuous" checked> Read continuously</label>
+          <label><input type="radio" name="audio-mode" value="step"> Pause after each step</label>
+        </div>
+
+        <!-- Speech Controls -->
+        <div class="speech-controls">
+          <button id="btn-read" class="btn-speech primary">🔊 Read</button>
+          <button id="btn-pause" class="btn-speech">⏸ Pause</button>
+          <button id="btn-stop" class="btn-speech">⏹ Stop</button>
+        </div>
+
+        <!-- UPGRADED: Editable Text Area -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; margin-bottom: 8px;">
+          <h3 style="margin: 0;">Recipe Instructions</h3>
+          <button id="btn-edit-text" style="padding: 6px 12px; background-color: var(--surface); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-weight: bold;">✏️ Edit</button>
+        </div>
+        
+        <p id="detail-steps" class="steps-text" style="white-space: pre-wrap; line-height: 1.6;"></p>
+        
+        <textarea id="edit-steps-input" class="hidden" rows="12" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 12px; font-family: inherit; line-height: 1.5;"></textarea>
+        
+        <button id="btn-save-text" class="hidden" style="width: 100%; padding: 12px; background-color: var(--text-main); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; margin-bottom: 24px;">💾 Save Changes</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,302 @@
+/* --- MINIMALIST, HIGH-CONTRAST PALETTE --- */
+:root {
+  --bg-color: #FAFAFA;
+  --surface: #FFFFFF;
+  --text-main: #111827;
+  --text-muted: #6B7280;
+  --border: #E5E7EB;
+  --primary: #000000;
+  --radius: 12px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent; 
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  line-height: 1.6;
+}
+
+/* --- HEADER & NAVIGATION --- */
+header {
+  background-color: var(--surface);
+  padding: 24px 20px 16px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+header h1 {
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 20px;
+  letter-spacing: -0.5px;
+  text-align: center;
+}
+
+nav {
+  display: flex;
+  gap: 8px;
+}
+
+nav button {
+  flex: 1;
+  background-color: transparent;
+  color: var(--text-muted);
+  border: 1px solid transparent;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+nav button.active {
+  background-color: var(--text-main);
+  color: white;
+}
+
+/* --- MAIN LAYOUT --- */
+main {
+  padding: 24px 20px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+h2 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+/* --- FUNCTIONAL CATEGORIES --- */
+.category-grid {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  /* Hides scrollbar for clean look */
+  scrollbar-width: none; 
+}
+.category-grid::-webkit-scrollbar { display: none; }
+
+.category-card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 30px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.category-card.active-category {
+  background-color: var(--text-main);
+  color: white;
+  border-color: var(--text-main);
+}
+
+/* --- ELEGANT RECIPE CARDS --- */
+.recipes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.recipe-card-item {
+  cursor: pointer;
+}
+
+.recipe-card-item img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+
+.recipe-info h3 {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-main);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.recipe-info span {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+/* --- FORMS & INPUTS --- */
+.input-group { margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px; }
+.input-group label { font-weight: 600; font-size: 14px; }
+input[type="text"], select, textarea, input[type="file"] {
+  width: 100%; padding: 14px; border: 1px solid var(--border);
+  border-radius: 8px; font-size: 16px; background-color: var(--surface);
+}
+#btn-save-recipe {
+  width: 100%; padding: 16px; background-color: var(--text-main); color: white;
+  border: none; border-radius: 8px; font-size: 16px; font-weight: 700; margin-top: 16px;
+}
+
+/* --- DETAIL VIEW (READING MODE) --- */
+.detail-header { margin-bottom: 24px; }
+#btn-back { background: none; border: none; color: var(--text-muted); font-size: 16px; font-weight: 600; cursor: pointer; }
+#detail-image { width: 100%; height: 250px; object-fit: cover; border-radius: var(--radius); margin-bottom: 24px; }
+.recipe-content h2 { font-size: 28px; color: var(--text-main); text-transform: none; letter-spacing: 0; margin-bottom: 8px; }
+.badge { display: inline-block; background-color: var(--border); padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; margin-bottom: 16px; text-transform: uppercase; }
+.steps-text { font-size: 20px; line-height: 1.6; white-space: pre-wrap; margin-top: 16px; }
+
+/* --- BIG ACCESSIBLE SPEECH BUTTONS --- */
+.speech-controls { display: flex; gap: 12px; margin: 24px 0; padding-top: 24px; border-top: 1px solid var(--border); }
+.btn-speech { flex: 1; padding: 16px; border: 1px solid var(--border); border-radius: 8px; background-color: var(--surface); font-weight: 700; font-size: 16px; cursor: pointer; }
+.btn-speech.primary { background-color: var(--text-main); color: white; border: none; }
+
+.hidden { display: none !important; }
+
+/* --- NEW UPGRADE STYLES --- */
+
+/* Hiding the ugly default file input */
+.hidden-file-input {
+  display: none;
+}
+
+/* The massive, friendly camera button */
+.custom-file-upload {
+  display: block;
+  padding: 32px 20px;
+  background-color: var(--surface);
+  border: 2px dashed #9CA3AF;
+  border-radius: 12px;
+  text-align: center;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-main);
+  transition: background-color 0.2s;
+}
+
+.custom-file-upload:active {
+  background-color: #F3F4F6;
+}
+
+/* The detail header now uses flexbox to push the back and delete buttons apart */
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+/* The red delete button */
+.btn-delete {
+  background: none;
+  border: none;
+  color: #EF4444; /* Alert red */
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px;
+}
+
+/* Audio toggle styling */
+.audio-toggle {
+  display: flex;
+  gap: 16px;
+  margin: 16px 0;
+  font-size: 15px;
+  color: var(--text-muted);
+}
+
+.audio-toggle label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+/* --- TAB CONTROLS --- */
+.upload-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.upload-tabs button {
+  flex: 1;
+  padding: 12px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.upload-tabs button.active-tab {
+  background-color: var(--text-main);
+  color: white;
+  border-color: var(--text-main);
+}
+
+.btn-primary {
+  padding: 0 16px; 
+  background-color: var(--text-main); 
+  color: white; 
+  border: none; 
+  border-radius: 8px; 
+  font-weight: 600; 
+  cursor: pointer; 
+  white-space: nowrap;
+}
+
+/* --- EDIT PHOTO OVERLAY --- */
+.detail-image-container {
+  position: relative;
+  margin-bottom: 24px;
+}
+
+#detail-image {
+  margin-bottom: 0; /* Override the old margin */
+}
+
+.btn-edit-photo {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.2s;
+}
+
+.btn-edit-photo:active {
+  background-color: rgba(0, 0, 0, 0.9);
+}
