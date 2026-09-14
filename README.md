@@ -18,12 +18,20 @@ It’s a Progressive Web App (PWA) built for saving and managing recipes. It has
 
 It also uses a Service Worker to cache data locally, meaning the app and your saved recipes still load perfectly even if you lose cell service at the grocery store.
 
-## The AWS Migration (Under the Hood)
-I am currently transitioning this from a direct frontend-to-database setup into a secure, 3-tier AWS architecture. 
+## The AWS Migration
 
-* **Hosting & CDN:** Moving from Netlify to **Amazon S3** for static hosting, distributed globally via **Amazon CloudFront**.
-* **Backend Compute:** Replacing direct database calls with **AWS Lambda** functions behind an **Amazon API Gateway**. 
-* **Database & Storage:** Moving the NoSQL data to **Amazon DynamoDB** and storing the recipe cover photos in a dedicated **Amazon S3** bucket.
-* **Security Upgrade:** Previously, the Gemini API key was held in the frontend code. I am moving this to the backend and storing it securely in **AWS Secrets Manager**.
+This project started as a simple frontend app, but I recently migrated the entire backend to AWS. I wanted to learn cloud architecture, secure my AI API keys, and solve some annoying CORS issues I was hitting with public web scrapers.
 
-*(Note: This migration is currently in progress. I am actively writing the Infrastructure as Code and setting up the Lambda endpoints!)*
+Here is how I rebuilt it:
+
+Infrastructure as Code (IaC): I used Terraform to provision and manage the entire AWS environment so I could spin it up (and tear it down) easily from my terminal.
+
+Fixing CORS with AWS Lambda: I moved the recipe-scraping logic off the frontend and into an AWS Lambda (Node.js) function behind API Gateway. This completely bypassed browser CORS blocks and made the AI extraction way more reliable.
+
+Adding Authentication (Cognito): I added AWS Cognito to lock down the app. It issues JWT tokens so my family can share a single synchronized cookbook, while isolating guest users (like recruiters) into their own empty databases.
+
+Database & Storage: I swapped out my original database for DynamoDB (partitioning the data by userId) and set up private S3 buckets for hosting the frontend and storing uploaded recipe photos.
+
+Security First: My Google Gemini API key used to be exposed in the frontend. Now, it is securely locked in AWS Secrets Manager, and my Lambda function uses strictly scoped IAM roles to access it.
+
+Global Delivery: The frontend is distributed globally using Amazon CloudFront.
