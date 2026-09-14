@@ -24,14 +24,14 @@ This project started as a simple frontend app, but I recently migrated the entir
 
 Here is how I rebuilt it:
 
-Infrastructure as Code (IaC): I used Terraform to provision and manage the entire AWS environment so I could spin it up (and tear it down) easily from my terminal.
+**Infrastructure as Code (IaC):** I used Terraform to provision and manage the entire AWS environment so I could spin it up (and tear it down) easily from my terminal.
 
-Fixing CORS with AWS Lambda: I moved the recipe-scraping logic off the frontend and into an AWS Lambda (Node.js) function behind API Gateway. This completely bypassed browser CORS blocks and made the AI extraction way more reliable.
+**Fixing CORS with AWS Lambda:** I moved the recipe-scraping logic off the frontend and into an AWS Lambda (Node.js) function behind API Gateway. This completely bypassed browser CORS blocks and made the AI extraction way more reliable.
 
-Adding Authentication (Cognito): I added AWS Cognito to lock down the app. It issues JWT tokens so my family can share a single synchronized cookbook, while isolating guest users (like recruiters) into their own empty databases.
+**Adding Authentication (Cognito):** I added AWS Cognito to lock down the app. It issues JWT tokens so my family can share a single synchronized cookbook, while isolating guest users (like recruiters) into their own empty databases.
 
-Database & Storage: I swapped out my original database for DynamoDB (partitioning the data by userId) and set up private S3 buckets for hosting the frontend and storing uploaded recipe photos.
+**Database & Storage:** I swapped out my original database for DynamoDB (partitioning the data by userId) and set up private S3 buckets for hosting the frontend and storing uploaded recipe photos.
 
-Security First: My Google Gemini API key used to be exposed in the frontend. Now, it is securely locked in AWS Secrets Manager, and my Lambda function uses strictly scoped IAM roles to access it.
+**Security First:** My Google Gemini API key used to be exposed in the frontend. Now, it is securely locked in AWS Secrets Manager, and my Lambda function uses strictly scoped IAM roles to access it.
 
-Global Delivery: The frontend is distributed globally using Amazon CloudFront.
+**Global Delivery:** The frontend is distributed globally using Amazon CloudFront.
