@@ -1,4 +1,4 @@
-# recipe-keeper-aws-serverless
+# Recipe Kepper Serverless PWA
 
 Live Demo: [https://d2tjksce0qbw7r.cloudfront.net/]
 
