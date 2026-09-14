@@ -1,6 +1,7 @@
 # recipe-keeper-aws-serverless
 
 Live Demo: [https://d2tjksce0qbw7r.cloudfront.net/]
+
 Test Credentials: Click "Try the Recruiter Demo" on the login screen, or use guest@recipekeeper.com / HireMe2026!
 
 I originally built this app as a standalone frontend project using Supabase. As I started studying for my AWS Solutions Architect Associate (SAA) certification, I decided to take things a step further and migrate the entire project to a true AWS serverless architecture to put what I was learning into practice.
