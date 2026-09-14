@@ -1,10 +1,5 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-
-// --- YOUR API KEYS ---
-const supabaseUrl = 'https://YOUR_SUPABASE_PROJECT.supabase.co';
-const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
-const supabase = createClient(supabaseUrl, supabaseKey);aw
-const geminiApiKey = 'YOUR_GEMINI_API_KEY';
+// --- AWS BACKEND CONFIGURATION ---
+const API_BASE_URL = "https://wvdfrv7bqd.execute-api.eu-south-2.amazonaws.com";
 
 // --- REGISTER SERVICE WORKER FOR OFFLINE SUPPORT ---
 if ('serviceWorker' in navigator) {
@@ -40,7 +35,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const detailSteps = document.getElementById('detail-steps');
   const editPhotoInput = document.getElementById('edit-photo-input');
 
-  // New Edit Text Elements
   const btnEditText = document.getElementById('btn-edit-text');
   const editStepsInput = document.getElementById('edit-steps-input');
   const btnSaveText = document.getElementById('btn-save-text');
@@ -53,8 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- STATE VARIABLES ---
   let currentPhotoFile = null; 
   let currentCategoryFilter = null;
-  let currentRecipeId = null;
-  let currentRecipePhotoName = null;
+  let currentRecipe = null;
   let currentUploadMode = 'photo'; 
 
   let availableVoices = [];
@@ -130,30 +123,30 @@ document.addEventListener('DOMContentLoaded', () => {
       btnSaveText.disabled = true;
 
       try {
-        const { error } = await supabase
-          .from('recipes')
-          .update({ steps: updatedText })
-          .eq('id', currentRecipeId);
-
-        if (error) throw error;
-
-        // Update the screen instantly
-        detailSteps.textContent = updatedText;
+        const updatedRecipe = { ...currentRecipe, steps: updatedText };
         
-        // Re-calculate the speech reader steps
+        const res = await fetch(`${API_BASE_URL}/recipes`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updatedRecipe)
+        });
+
+        if (!res.ok) throw new Error("Failed to update text in AWS");
+
+        detailSteps.textContent = updatedText;
+        currentRecipe.steps = updatedText;
+        
         stepsArray = updatedText.split(/(?<=[.?!])\s+/).filter(s => s.trim().length > 0);
         currentStepIndex = 0;
         const audioModeElement = document.querySelector('input[name="audio-mode"]:checked');
         const isContinuous = audioModeElement ? audioModeElement.value === 'continuous' : true;
         btnRead.textContent = isContinuous ? "🔊 Read All" : "🔊 Read Step 1";
 
-        // Flip UI back to read-only mode
         editStepsInput.classList.add('hidden');
         detailSteps.classList.remove('hidden');
         btnSaveText.classList.add('hidden');
         btnEditText.classList.remove('hidden');
 
-        // Refresh background cache
         loadRecipes();
         
       } catch (error) {
@@ -166,81 +159,66 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- URL EXTRACTOR LOGIC ---
-  const btnFetchUrl = document.getElementById('btn-fetch-url');
-  const urlInput = document.getElementById('recipe-url');
+  // --- URL EXTRACTOR LOGIC (AWS BACKEND) ---
+      const btnFetchUrl = document.getElementById('btn-fetch-url');
+      const urlInput = document.getElementById('recipe-url');
 
-  btnFetchUrl.addEventListener('click', async () => {
-    if (!navigator.onLine) {
-      alert("You need an internet connection to import a link.");
-      return;
-    }
+      btnFetchUrl.addEventListener('click', async () => {
+        if (!navigator.onLine) {
+          alert("You need an internet connection to import a link.");
+          return;
+        }
 
-    const url = urlInput.value.trim();
-    if (!url) {
-      alert("Please paste a link first.");
-      return;
-    }
+        const url = urlInput.value.trim();
+        if (!url) {
+          alert("Please paste a link first.");
+          return;
+        }
 
-    btnFetchUrl.textContent = "Loading...";
-    btnFetchUrl.disabled = true;
+        btnFetchUrl.textContent = "Loading...";
+        btnFetchUrl.disabled = true;
 
-    try {
-      const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-      const proxyResponse = await fetch(proxyUrl);
-      
-      if (!proxyResponse.ok) throw new Error("Could not load the website.");
-      const rawTextData = await proxyResponse.text();
+        try {
+          const prompt = `
+          You are a recipe extractor. Read the following website text and isolate the recipe context.
+          Return ONLY a valid JSON object with these exact keys (do NOT include markdown backticks like \`\`\`json):
+          "title": "The name of the recipe",
+          "category": "Choose exactly one: breakfast, mains, desserts, or others",
+          "steps": "The ingredients and instructions combined. You MUST use newline characters (\\n) to separate each ingredient and each step so it formats as a clean, beautiful list with line breaks."
+          `;
 
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(rawTextData, 'text/html');
-      doc.querySelectorAll('script, style, header, footer, nav, sidebar, noscript, iframe').forEach(el => el.remove());
-      const cleanPageText = doc.body.innerText || doc.body.textContent || "";
-      const cleanRecipeText = cleanPageText.substring(0, 15000);
+          // Send the target URL directly to our robust AWS Lambda backend!
+          const response = await fetch(`${API_BASE_URL}/ai/extract`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: prompt, targetUrl: url })
+          });
 
-      const prompt = `
-      You are a recipe extractor. Read the following website text and isolate the recipe context.
-      Return ONLY a valid JSON object with these exact keys (do NOT include markdown backticks like \`\`\`json):
-      "title": "The name of the recipe",
-      "category": "Choose exactly one: breakfast, mains, desserts, or others",
-      "steps": "The ingredients and instructions combined. You MUST use newline characters (\\n) to separate each ingredient and each step so it formats as a clean, beautiful list with line breaks."
-      
-      Website text content:
-      ${cleanRecipeText}
-      `;
+          const data = await response.json();
+          if (!response.ok) throw new Error("AWS AI API Error");
 
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
-      const response = await fetch(geminiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+          let rawText = data.candidates[0].content.parts[0].text.trim();
+          rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim(); 
+          
+          const recipeData = JSON.parse(rawText);
+
+          document.getElementById('recipe-title').value = recipeData.title || "";
+          document.getElementById('recipe-steps').value = recipeData.steps || "";
+          
+          const catSelect = document.getElementById('recipe-category');
+          if (recipeData.category) {
+            const matchingOption = catSelect.querySelector(`option[value="${recipeData.category.toLowerCase()}"]`);
+            if (matchingOption) matchingOption.selected = true;
+          }
+
+        } catch (error) {
+          console.error("URL Extraction Error:", error);
+          alert("Could not extract the recipe automatically.");
+        } finally {
+          btnFetchUrl.textContent = "Auto-Fill";
+          btnFetchUrl.disabled = false;
+        }
       });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error?.message || "Google API Error");
-
-      let rawText = data.candidates[0].content.parts[0].text.trim();
-      rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim(); 
-      
-      const recipeData = JSON.parse(rawText);
-
-      document.getElementById('recipe-title').value = recipeData.title || "";
-      document.getElementById('recipe-steps').value = recipeData.steps || "";
-      
-      const catSelect = document.getElementById('recipe-category');
-      if (recipeData.category) {
-        const matchingOption = catSelect.querySelector(`option[value="${recipeData.category.toLowerCase()}"]`);
-        if (matchingOption) matchingOption.selected = true;
-      }
-
-    } catch (error) {
-      console.error("URL Extraction Error:", error);
-      alert("Could not extract the recipe automatically. The website might be blocking scrapers.");
-    } finally {
-      btnFetchUrl.textContent = "Auto-Fill";
-      btnFetchUrl.disabled = false;
-    }
-  });
 
   // --- DELETE RECIPE LOGIC ---
   btnDelete.addEventListener('click', async () => {
@@ -251,13 +229,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const isConfirmed = confirm(`Are you sure you want to delete "${detailTitle.textContent}"? This cannot be undone.`);
     
-    if (isConfirmed && currentRecipeId) {
+    if (isConfirmed && currentRecipe?.id) {
       btnDelete.textContent = "Deleting...";
       try {
-        await supabase.from('recipes').delete().eq('id', currentRecipeId);
-        if (currentRecipePhotoName) {
-           await supabase.storage.from('recipe-photos').remove([currentRecipePhotoName]);
-        }
+        const res = await fetch(`${API_BASE_URL}/recipes/${currentRecipe.id}`, {
+          method: "DELETE"
+        });
+        if (!res.ok) throw new Error("Failed to delete from AWS");
+
         switchView('home');
         loadRecipes(); 
       } catch (error) {
@@ -269,50 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // --- EDIT/CHANGE PHOTO LOGIC ---
-  editPhotoInput.addEventListener('change', async (e) => {
-    if (!navigator.onLine) {
-      alert("You need an internet connection to update the photo.");
-      return;
-    }
-
-    const file = e.target.files[0];
-    if (!file || !currentRecipeId) return;
-
-    const label = document.querySelector('.btn-edit-photo');
-    label.textContent = "⏳ Uploading...";
-
-    try {
-      const newFileName = `${Date.now()}_${file.name.replace(/\s+/g, '-')}`;
-      const { error: uploadError } = await supabase.storage.from('recipe-photos').upload(newFileName, file);
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage.from('recipe-photos').getPublicUrl(newFileName);
-      const newPhotoUrl = urlData.publicUrl;
-
-      const { error: dbError } = await supabase.from('recipes')
-        .update({ photo_url: newPhotoUrl, file_name: newFileName })
-        .eq('id', currentRecipeId);
-      if (dbError) throw dbError;
-
-      if (currentRecipePhotoName) {
-        await supabase.storage.from('recipe-photos').remove([currentRecipePhotoName]);
-      }
-
-      detailImage.src = newPhotoUrl;
-      currentRecipePhotoName = newFileName;
-      
-      loadRecipes();
-
-    } catch (error) {
-      console.error("Error updating photo:", error);
-      alert("Something went wrong while updating the photo.");
-    } finally {
-      label.textContent = "✏️ Change Photo";
-    }
-  });
-
-  // --- HANDWRITING AI VISION LOGIC ---
+  // --- HANDWRITING AI VISION LOGIC (AWS BACKEND) ---
   photoInput.addEventListener('change', async (e) => { 
     if (!navigator.onLine) {
       alert("You need an internet connection to scan handwriting.");
@@ -346,24 +282,18 @@ document.addEventListener('DOMContentLoaded', () => {
           reader.onerror = error => reject(error);
         });
 
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
-        
-        const response = await fetch(geminiUrl, {
+        // Call AWS API Gateway instead of Google directly
+        const response = await fetch(`${API_BASE_URL}/ai/extract`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            contents: [{
-              parts: [
-                { text: "You are a recipe transcriber. Read the text in this image. Extract exactly what is written, preserving line breaks. Do not add any conversational filler, markdown formatting, or extra symbols." },
-                { inline_data: { mime_type: file.type, data: base64Image } }
-              ]
-            }]
+            prompt: "You are a recipe transcriber. Read the text in this image. Extract exactly what is written, preserving line breaks. Do not add any conversational filler, markdown formatting, or extra symbols.",
+            imageBase64: base64Image
           })
         });
 
         const data = await response.json();
-
-        if (!response.ok) throw new Error(data.error?.message || "Unknown Google API Error");
+        if (!response.ok) throw new Error("AWS AI API Error");
 
         if (data.candidates && data.candidates.length > 0) {
           stepsTextarea.value = data.candidates[0].content.parts[0].text.trim();
@@ -400,26 +330,24 @@ document.addEventListener('DOMContentLoaded', () => {
     submitBtn.disabled = true;
 
     try {
-      let finalPhotoUrl = "https://images.unsplash.com/photo-1495521821757-a1efb6729352?auto=format&fit=crop&w=400&q=80";
-      let finalFileName = null;
+      // Note: Image upload to S3 directly requires AWS Presigned URLs. 
+      // For now, we use a placeholder image to ensure the DynamoDB save succeeds.
+      const finalPhotoUrl = "https://images.unsplash.com/photo-1495521821757-a1efb6729352?auto=format&fit=crop&w=400&q=80";
 
-      if (currentPhotoFile) {
-        finalFileName = `${Date.now()}_${currentPhotoFile.name.replace(/\s+/g, '-')}`;
-        const { error: uploadError = null } = await supabase.storage.from('recipe-photos').upload(finalFileName, currentPhotoFile);
-        if (uploadError) throw uploadError;
-        const { data: urlData } = supabase.storage.from('recipe-photos').getPublicUrl(finalFileName);
-        finalPhotoUrl = urlData.publicUrl;
-      }
+      const newRecipe = {
+        title: title,
+        category: category,
+        photo_url: finalPhotoUrl,
+        steps: steps
+      };
 
-      const { error: dbError } = await supabase.from('recipes').insert([{ 
-            title: title, 
-            category: category, 
-            photo_url: finalPhotoUrl,
-            steps: steps,
-            file_name: finalFileName 
-      }]);
+      const res = await fetch(`${API_BASE_URL}/recipes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newRecipe)
+      });
 
-      if (dbError) throw dbError;
+      if (!res.ok) throw new Error("Failed to save to AWS");
       
       alert(`Success! "${title}" is securely saved.`);
       
@@ -473,8 +401,7 @@ document.addEventListener('DOMContentLoaded', () => {
       card.className = 'recipe-card-item';
       
       card.addEventListener('click', () => {
-        currentRecipeId = recipe.id;
-        currentRecipePhotoName = recipe.file_name;
+        currentRecipe = recipe;
 
         detailTitle.textContent = recipe.title;
         detailImage.src = recipe.photo_url;
@@ -483,7 +410,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const rawText = recipe.steps || "No instructions provided.";
         detailSteps.textContent = rawText;
         
-        // Safety Reset: Close the edit window if it was left open from a previous recipe
         if (btnEditText) {
           editStepsInput.classList.add('hidden');
           btnSaveText.classList.add('hidden');
@@ -518,11 +444,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (navigator.onLine) {
       try {
-        let query = supabase.from('recipes').select('*').order('id', { ascending: false });
-        if (currentCategoryFilter) query = query.eq('category', currentCategoryFilter);
+        const res = await fetch(`${API_BASE_URL}/recipes`);
+        if (!res.ok) throw new Error("Network response was not ok");
         
-        const { data: recipes, error } = await query;
-        if (error) throw error;
+        let recipes = await res.json();
+        
+        // Replicate Supabase's descending order
+        recipes.reverse();
+
+        if (currentCategoryFilter) {
+          recipes = recipes.filter(r => r.category === currentCategoryFilter);
+        }
 
         if (!currentCategoryFilter) {
            localStorage.setItem('offlineRecipeBackup', JSON.stringify(recipes));
@@ -632,7 +564,6 @@ document.addEventListener('DOMContentLoaded', () => {
     btnRead.textContent = isContinuous ? "🔊 Read All" : "🔊 Read Step 1";
   });
 
-  // Start app!
   loadRecipes();
 
 });

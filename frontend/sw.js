@@ -1,56 +1,20 @@
-const CACHE_NAME = 'recipe-keeper-v2';
-const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/style.css',
-  '/app.js',
-  '/manifest.json'
-];
-
-// 1. Install and cache the core files
 self.addEventListener('install', event => {
-  self.skipWaiting(); // Forces the browser to immediately activate the new version
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
-  );
+  self.skipWaiting(); // Forces the browser to activate this new version immediately
 });
 
-// 2. Clean up old vaults when the app updates
 self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-  );
+  event.waitUntil(clients.claim());
 });
 
-// 3. THE UPGRADE: "Network-First" Strategy
 self.addEventListener('fetch', event => {
-
-   if (!event.request.url.startsWith('http') || event.request.method !== 'GET') {
-    return; 
+  // CRITICAL FIX: Ignore all requests to AWS API Gateway, external proxies, and image hosts.
+  // Only intercept requests that originate from our own domain.
+  if (!event.request.url.startsWith(self.location.origin)) {
+    return;
   }
 
+  // For local files, try fetching from the network first. If offline, try the cache.
   event.respondWith(
-    fetch(event.request)
-      .then(networkResponse => {
-        // If we have internet, save a fresh copy to the vault and show the new code!
-        return caches.open(CACHE_NAME).then(cache => {
-          cache.put(event.request, networkResponse.clone());
-          return networkResponse;
-        });
-      })
-      .catch(() => {
-        // If the internet is down, fallback to the vault
-        return caches.match(event.request);
-      })
+    fetch(event.request).catch(() => caches.match(event.request))
   );
 });
