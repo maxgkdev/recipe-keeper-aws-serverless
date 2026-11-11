@@ -1,4 +1,4 @@
-# Recipe Kepper Serverless PWA
+# Recipe Keeper Serverless PWA
 
 Live Demo: [https://d2tjksce0qbw7r.cloudfront.net/]
 
